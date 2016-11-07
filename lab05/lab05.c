@@ -53,6 +53,8 @@ int main(int argc, char** argv) {
         MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+        printf("Hello from processor %d of %d\n", rank, nprocs);
+
         srand(0);
         if(rank == 0) {
                 int i, j;
@@ -66,8 +68,6 @@ int main(int argc, char** argv) {
         } else {
                 broadcast(matrix, rank);
         }
-
-        printf("Hello from processor %d of %d\n", rank, nprocs);
         print_m(m);
 
         // column_sum(matrix);
