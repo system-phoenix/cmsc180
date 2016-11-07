@@ -30,7 +30,7 @@ void broadcast(int matrix[n][n], int rank) {
         int i, j;
         int np = n / p;
         int sendCounts[p], displs[p];
-        int recvcount;
+        int recvcount = n / p;
         if(rank == 0) {
                 for(i = 0, j = 0; i < p; i++) {
                         sendCounts[i] = np;
