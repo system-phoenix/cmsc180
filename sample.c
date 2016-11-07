@@ -7,6 +7,7 @@
 
 int main(int argc, char *argv[])
 {
+    int i, j;
     int rank, size;     // for storing this process' rank, and the number of processes
     int *sendcounts;    // array describing how many elements to send to each process
     int *displs;        // array describing the displacements where each segment begins
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
     displs = malloc(sizeof(int)*size);
 
     // calculate send counts and displacements
-    for (int i = 0; i < size; i++) {
+    for (i = 0; i < size; i++) {
         sendcounts[i] = (SIZE*SIZE)/size;
         if (rem > 0) {
             sendcounts[i]++;
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])
 
     // print calculated send counts and displacements for each process
     if (0 == rank) {
-        for (int i = 0; i < size; i++) {
+        for (i = 0; i < size; i++) {
             printf("sendcounts[%d] = %d\tdispls[%d] = %d\n", i, sendcounts[i], i, displs[i]);
         }
     }
@@ -54,7 +55,7 @@ int main(int argc, char *argv[])
 
     // print what each process received
     printf("%d: ", rank);
-    for (int i = 0; i < sendcounts[rank]; i++) {
+    for (i = 0; i < sendcounts[rank]; i++) {
         printf("%c\t", rec_buf[i]);
     }
     printf("\n");
