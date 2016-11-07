@@ -2,7 +2,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 #define n 10
-#define p 1
+#define p 2
 
 int m[n][n /p];
 
@@ -63,12 +63,12 @@ int main(int argc, char** argv) {
                                 matrix[i][j] = (rand() % 10) + 1;
                         }
                 }
-                broadcast(matrix, rank);
+                // broadcast(matrix, rank);
 
         } else {
-                broadcast(matrix, rank);
+                // broadcast(matrix, rank);
         }
-        print_m(m);
+        // print_m(m);
 
         // column_sum(matrix);
 
