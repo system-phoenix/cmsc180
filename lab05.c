@@ -2,7 +2,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 #define n 10
-#define p 2
+#define p 1
 
 int m[n][n /p];
 
