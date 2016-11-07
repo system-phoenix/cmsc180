@@ -63,8 +63,8 @@ int main(int argc, char** argv) {
                                 matrix[i][j] = (rand() % 10) + 1;
                         }
                 }
+                print_matrix(matrix);
                 broadcast(matrix, rank);
-
         } else {
                 broadcast(matrix, rank);
         }
