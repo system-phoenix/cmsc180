@@ -39,7 +39,7 @@ void broadcast(int matrix[n][n], int rank) {
                 }
         }
         // int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
-        MPI_Scatterv(matrix, sendCounts, displs, MPI_INT, m, recvcount, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&matrix, sendCounts, displs, MPI_INT, &m, recvcount, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
 void column_sum(int matrix[n][n]) {
