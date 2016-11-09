@@ -1,76 +1,95 @@
 #include <stdio.h>
 #include <mpi.h>
 #include <stdlib.h>
+#include <math.h>
 #define n 10
-#define p 1
 
-int m[n][n /p];
-
-void print_matrix(int matrix[n][n]) {
-        int i, j;
-        for(i = 0; i < n; i++) {
-                for(j = 0; j < n; j++) {
-                        printf("%d\t", matrix[i][j]);
+void printMatrix(int *matrix, int row, int col, int last) {
+    printf("==================================\n");
+    int i, j;
+    for(i = 0; i < row; i++) {
+        for(j = 0; j < col; j++) {
+            if(!last) {
+                printf("%d\t", matrix[i * col + j]);
+            } else {
+                if(i + 1 == row) {
+                    printf("%d\t", matrix[i * col + j]);
                 }
+            }
+        }
+        if(!last) {
+            printf("\n");
+        } else {
+            if(i + 1 == row) {
                 printf("\n");
+            }
         }
+    }
+    printf("==================================\n");
 }
 
-void print_m(int matrix[n][n/p]) {
-        int i, j;
-        for(i = 0; i < n; i++) {
-                for(j = 0; j < n/p; j++) {
-                        printf("%d\t", matrix[i][j]);
-                }
-                printf("\n");
-        }
+void printCounts(int * array, int proc) {
+    int i;
+    for(i = 0; i < proc; i++) {
+        printf("%d\t", array[i]);
+    }
+    printf("\n");
 }
 
-void broadcast(int matrix[n][n], int rank) {
-        int i, j;
-        int np = n / p;
-        int sendCounts[p], displs[p];
-        int recvcount = n * (n / p);
-        if(rank == 0) {
-                for(i = 0, j = 0; i < p; i++) {
-                        sendCounts[i] = np;
-                        displs[i] = j;
-                        j += np;
-                }
+void transpose(int **matrix, int row, int col) {
+    int * tMatrix = (int *) malloc(sizeof(int) * row * col);
+    int i, j;
+    for(i = 0; i < row; i++) {
+        for(j = 0; j < col; j++) {
+            tMatrix[j * row + i] = (*matrix)[i * col + j];
         }
-        // int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
-        MPI_Scatterv(&(matrix[0][0]), sendCounts, displs, MPI_INT, &(m[0][0]), recvcount, MPI_INT, 0, MPI_COMM_WORLD);
-}
-
-void column_sum(int matrix[n][n]) {
-        int i, j;
+    }
+    free((*matrix));
+    (*matrix) = tMatrix;
 }
 
 int main(int argc, char** argv) {
-        int rank, nprocs;
-        int matrix[n][n];
-        MPI_Init(&argc, &argv);
-        MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int rank, p;
+    int i = 0;
+    int *absMatrix = NULL;
+    int *relMatrix = NULL;
+    int *sendCounts = NULL;
+    int *displs = NULL;
 
-        printf("Hello from processor %d of %d\n", rank, nprocs);
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &p);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-        srand(0);
-        if(rank == 0) {
-                int i, j;
-                for(i = 0; i < n; i++) {
-                        for(j = 0; j < n; j++) {
-                                matrix[i][j] = (rand() % 10) + 1;
-                        }
-                }
-                print_matrix(matrix);
+    srand(time(NULL));
+
+    // initialize the local matrix;
+    relMatrix = (int *) malloc(sizeof(int) * (n * n / p));
+
+    if(rank == 0) {
+        // if rank is 0, or the root,
+        absMatrix = (int *) malloc(sizeof(int) * (n * n));  // initialize the main matrix to be distributed
+        sendCounts = (int *) malloc(sizeof(int) * p);       // initialize the container for different sending sizes
+        displs = (int *) malloc(sizeof(int) * p);           // initialize the displacement values
+
+        for(i = 0; i < n * n; i++) {
+            absMatrix[i] = rand() % 10 + 1;                 //randomize value for the matrix
         }
-        broadcast(matrix, rank);
+        // transpose(&absMatrix, n, n);
 
-        print_m(m);
+        for(i = 0; i < p; i++) {
+            sendCounts[i] = ceil((float) (n * n) / (float) p);
+            displs[i] = i * (n / p);
+        }
+    }
 
-        // column_sum(matrix);
+    MPI_Scatterv(absMatrix, sendCounts, displs, MPI_INT, relMatrix, n * n / p, MPI_INT, 0, MPI_COMM_WORLD);
 
-        MPI_Finalize();
-        return 0;
+    for(i = n / p; i < n * n / p; i++) {
+        relMatrix[i] = relMatrix[i] + relMatrix[i - n / p];
+    }
+
+    MPI_Gatherv(relMatrix, n * n / p, MPI_INT, absMatrix, sendCounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Finalize();
+    return 0;
 }
