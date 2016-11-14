@@ -28,7 +28,7 @@ fi
 EXEC=$1
 
 #number of nodes to use in the run
-NODES=1
+NODES=2
 
 #execute
 mpiexec -np $NODES -f ../nodes.txt ./$EXEC
