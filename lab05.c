@@ -82,9 +82,8 @@ int main(int argc, char** argv) {
         // transpose(&absMatrix, n, n);
 
         for(i = 0; i < p; i++) {
-            displs[i] = displ;
             sendCounts[i] = round((float) (n / p) + i * (n / p)) - round((float) i * (n / p));
-            displ += sendCounts[i];
+            displs[i] = i * (n / p);
         }
     }
 
