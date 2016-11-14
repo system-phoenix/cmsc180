@@ -82,8 +82,9 @@ int main(int argc, char** argv) {
         // transpose(&absMatrix, n, n);
 
         for(i = 0; i < p; i++) {
+            displs[i] = displ;
             sendCounts[i] = round((float) (n / p) + i * (n / p)) - round((float) i * (n / p));
-            displs[i] = i * (n / p);
+            displ += sendCounts[i];
         }
     }
 
@@ -95,7 +96,7 @@ int main(int argc, char** argv) {
         relMatrix[i] = relMatrix[i] + relMatrix[i - n / p];
     }
 
-    MPI_Gatherv(relMatrix, n * n / p, MPI_INT, absMatrix, sendCounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(relMatrix, n / p, MPI_INT, absMatrix, sendCounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
 
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
