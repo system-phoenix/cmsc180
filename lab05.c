@@ -2,7 +2,8 @@
 #include <mpi.h>
 #include <stdlib.h>
 #include <math.h>
-#define n 10
+#include <time.h>
+#define n 10000
 
 void printMatrix(int *matrix, int row, int col, int last) {
     printf("==================================\n");
@@ -56,6 +57,8 @@ int main(int argc, char** argv) {
     int *sendCounts = NULL;
     int *displs = NULL;
 
+    time_t now;
+
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &p);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -82,6 +85,8 @@ int main(int argc, char** argv) {
         }
     }
 
+    now = time(0);
+
     MPI_Scatterv(absMatrix, sendCounts, displs, MPI_INT, relMatrix, n * n / p, MPI_INT, 0, MPI_COMM_WORLD);
 
     for(i = n / p; i < n * n / p; i++) {
@@ -89,6 +94,10 @@ int main(int argc, char** argv) {
     }
 
     MPI_Gatherv(relMatrix, n * n / p, MPI_INT, absMatrix, sendCounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
+
+    now = time(0) - now;
+
+    printf("n: %d with p: %d\nTime elapsed: %d\n", n, p, now);
 
     MPI_Finalize();
     return 0;
