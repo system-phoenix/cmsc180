@@ -57,7 +57,8 @@ int main(int argc, char** argv) {
     int *sendCounts = NULL;
     int *displs = NULL;
 
-    time_t now;
+    clock_t begin, end;
+    double time_spent;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &p);
@@ -85,7 +86,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    now = time(0);
+    begin = clock();
 
     MPI_Scatterv(absMatrix, sendCounts, displs, MPI_INT, relMatrix, n * n / p, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -95,9 +96,10 @@ int main(int argc, char** argv) {
 
     MPI_Gatherv(relMatrix, n * n / p, MPI_INT, absMatrix, sendCounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
 
-    now = time(0) - now;
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    printf("n: %d with p: %d\nTime elapsed: %d\n", n, p, now);
+    printf("n: %d with p: %d\nTime elapsed: %ld\n", n, p, time_spent);
 
     MPI_Finalize();
     return 0;
