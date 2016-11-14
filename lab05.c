@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    printf("n: %d with p: %d\nTime elapsed: %ld\n", n, p, time_spent);
+    printf("n: %d with p: %d\nTime elapsed: %lf\n", n, p, time_spent);
 
     MPI_Finalize();
     return 0;
