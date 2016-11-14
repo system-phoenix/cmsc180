@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
         relMatrix[i] = relMatrix[i] + relMatrix[i - n / p];
     }
 
-    MPI_Gatherv(relMatrix, n * n, MPI_INT, absMatrix, sendCounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(relMatrix, n / p, MPI_INT, absMatrix, sendCounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
 
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
