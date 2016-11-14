@@ -52,6 +52,7 @@ void transpose(int **matrix, int row, int col) {
 int main(int argc, char** argv) {
     int rank, p;
     int i = 0;
+    int displ = 0;
     int *absMatrix = NULL;
     int *relMatrix = NULL;
     int *sendCounts = NULL;
@@ -81,8 +82,9 @@ int main(int argc, char** argv) {
         // transpose(&absMatrix, n, n);
 
         for(i = 0; i < p; i++) {
-            sendCounts[i] = ceil((float) (n * n) / (float) p);
-            displs[i] = i * (n / p);
+            displs[i] = displ;
+            sendCounts[i] = round((float) (n / p) + i * (n / p)) - round((float) i * (n / p));
+            displ += sendCounts[i];
         }
     }
 
