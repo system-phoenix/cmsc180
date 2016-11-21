@@ -1,5 +1,5 @@
 #!/bin/bash
 
-mpicc -o lab05.exe lab05.c -lm
-sbatch submit.sh ./lab05.exe
+mpicc -o lab06.exe lab06.c -lm
+sbatch submit.sh ./lab06.exe
 cat output.txt
