@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#define n 6
+#define n 4
 
 void printMatrix(int *matrix, int row, int col, int last) {
     printf("==================================\n");
@@ -53,12 +53,30 @@ void transform(int **matrix, int row, int col) {
     (*matrix) = tMatrix;
 }
 
+void matrix_multiply(int **result, int **A, int ay, int ax, int **B, int by, int bx) {
+    if(ax == by) {
+        (*result) = (int *) malloc(sizeof(int) * ay * bx);
+        int i, j, k;
+        for(i = 0; i < ay; i++) {
+            for(j = 0; j < bx; j++) {
+                int sum = 0;
+                for(k = 0; k < ax; k++) {
+                    sum += (*A)[i * bx + k] * (*B)[j * ay + k];
+                }
+                (*result)[i * bx + j] = sum;
+            }
+        }
+        printMatrix((*result), ay, bx, 0);
+    }
+}
+
 int main(int argc, char** argv) {
     int rank, p;
     int i = 0;
     int displ = 0;
     int *absMatrix = NULL;
     int *relMatrix = NULL;
+    int *temp = NULL;
     int *sendCounts = NULL;
     int *displs = NULL;
 
@@ -85,7 +103,33 @@ int main(int argc, char** argv) {
         }
         transform(&absMatrix, n, n);
 
+        // absMatrix[0] = 0;   absMatrix[1] = 1;   absMatrix[2] = 1;   absMatrix[3] = 1;   absMatrix[4] = 1;
+
+        // absMatrix[5] = 1;   absMatrix[6] = 0;   absMatrix[7] = 1;   absMatrix[8] = 1;   absMatrix[9] = 1;
+
+        // absMatrix[10] = 1;  absMatrix[11] = 1;  absMatrix[12] = 0;  absMatrix[13] = 1;  absMatrix[14] = 1;
+
+        // absMatrix[15] = 1;  absMatrix[16] = 1;  absMatrix[17] = 1;  absMatrix[18] = 0;  absMatrix[19] = 1;
+
+        // absMatrix[20] = 1;  absMatrix[21] = 1;  absMatrix[22] = 1;  absMatrix[23] = 1;  absMatrix[24] = 0;
+
+
+        absMatrix[0] = 0;   absMatrix[1] = 1;   absMatrix[2] = 0;   absMatrix[3] = 1;
+
+        absMatrix[4] = 1;   absMatrix[5] = 0;   absMatrix[6] = 1;   absMatrix[7] = 1;
+
+        absMatrix[8] = 0;   absMatrix[9] = 1;   absMatrix[10] = 0;  absMatrix[11] = 1;
+
+        absMatrix[12] = 1;  absMatrix[13] = 1;  absMatrix[14] = 1;  absMatrix[15] = 0;
+
+
         printMatrix(absMatrix, n, n, 0);
+
+        matrix_multiply(&relMatrix, &absMatrix, n, n, &absMatrix, n, n);
+        temp = relMatrix;
+        matrix_multiply(&relMatrix, &temp, n, n, &absMatrix, n, n);
+        temp = relMatrix;
+        matrix_multiply(&relMatrix, &temp, n, n, &absMatrix, n, n);
         // for(i = 0; i < p; i++) {
         //     displs[i] = displ;
         //     sendCounts[i] = round((float) (n / p) + i * (n / p)) - round((float) i * (n / p));
