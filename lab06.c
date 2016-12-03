@@ -70,6 +70,15 @@ void matrix_multiply(int **result, int **A, int ay, int ax, int **B, int by, int
     }
 }
 
+void matrix_divide(int ** A, int ay, int ax, int B) {
+    int i, j;
+    for(i = 0; i < ay; i++) {
+        for(j = 0; j < ax; j++) {
+            (*A)[i * ax + j] /= B;
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     int rank, p;
     int i = 0;
