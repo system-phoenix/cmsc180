@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#define n 5
+#define n 4000
 
 void printMatrix(int *matrix, int row, int col, int last) {
     printf("==================================\n");
@@ -53,6 +53,18 @@ void transform(int **matrix, int row, int col) {
     (*matrix) = tMatrix;
 }
 
+void transpose(int **matrix, int row, int col) {
+    int * tMatrix = (int *) malloc(sizeof(int) * row * col);
+    int i, j;
+    for(i = 0; i < row; i++) {
+        for(j = 0; j < col; j++) {
+            tMatrix[j * row + i] = (*matrix)[i * col + j];
+        }
+    }
+    free((*matrix));
+    (*matrix) = tMatrix;
+}
+
 void matrix_multiply(int **result, int **A, int ay, int ax, int **B, int by, int bx) {
     if(ax == by) {
         (*result) = (int *) malloc(sizeof(int) * ay * bx);
@@ -66,7 +78,6 @@ void matrix_multiply(int **result, int **A, int ay, int ax, int **B, int by, int
                 (*result)[i * bx + j] = sum;
             }
         }
-        printMatrix((*result), ay, bx, 0);
     }
 }
 
@@ -79,7 +90,7 @@ void matrix_divide(int ** A, int ay, int ax, int B) {
     }
 }
 
-int void_columns(int * A, int * B) {
+long void_columns(int * A, int * B) {
     int i, j, squares = 0;
     for(i = 0; i < n; i++) {
         if((A)[i * n + i]) {
@@ -99,14 +110,12 @@ int void_columns(int * A, int * B) {
 }
 
 int main(int argc, char** argv) {
-    int rank, p, squares;
+    int rank, p;
     int i = 0;
-    int displ = 0;
-    int *absMatrix = NULL;
-    int *relMatrix = NULL;
+    int *absMatrix = NULL, *resMatrix = NULL, *revMatrix = NULL;
+    int *A = NULL, *B = NULL;
     int *temp = NULL;
-    int *sendCounts = NULL;
-    int *displs = NULL;
+    long squares;
 
     clock_t begin, end;
     double time_spent;
@@ -117,54 +126,77 @@ int main(int argc, char** argv) {
 
     srand(time(NULL));
 
-    // initialize the local matrix;
-    relMatrix = (int *) malloc(sizeof(int) * (n * n / p));
+    // initialize the local matrices;
+    A = (int *) malloc(sizeof(int) * (n * n / p));
+    resMatrix = (int *) malloc(sizeof(int) * (n * n));
+    revMatrix = (int *) malloc(sizeof(int) * (n * n));
+    printf("Creating matrix...\n");
+    absMatrix = (int *) malloc(sizeof(int) * (n * n));  // initialize the main matrix to be distributed
+    
+    for(i = 0; i < n * n; i++) {
+        resMatrix[i] = 0;
+    }
 
     if(rank == 0) {
         // if rank is 0, or the root,
-        absMatrix = (int *) malloc(sizeof(int) * (n * n));  // initialize the main matrix to be distributed
-        sendCounts = (int *) malloc(sizeof(int) * p);       // initialize the container for different sending sizes
-        displs = (int *) malloc(sizeof(int) * p);           // initialize the displacement values
 
+        printf("Randomizing the contents of the matrix...\n");
         for(i = 0; i < n * n; i++) {
             absMatrix[i] = rand() % 2;                 //randomize value for the matrix
         }
-        // transform(&absMatrix, n, n);
+        transform(&absMatrix, n, n);
 
+        // absMatrix[0] = 0;   absMatrix[1] = 1;   absMatrix[2] = 0;   absMatrix[3] = 0;   absMatrix[4] = 1;
+
+        // absMatrix[5] = 1;   absMatrix[6] = 0;   absMatrix[7] = 1;   absMatrix[8] = 1;   absMatrix[9] = 1;
+
+        // absMatrix[10] = 0;  absMatrix[11] = 1;  absMatrix[12] = 0;  absMatrix[13] = 1;  absMatrix[14] = 0;
+
+        // absMatrix[15] = 0;  absMatrix[16] = 1;  absMatrix[17] = 1;  absMatrix[18] = 0;  absMatrix[19] = 1;
+
+        // absMatrix[20] = 1;  absMatrix[21] = 1;  absMatrix[22] = 0;  absMatrix[23] = 1;  absMatrix[24] = 0;
+
+
+        // absMatrix[0] = 0;   absMatrix[1] = 1;   absMatrix[2] = 0;   absMatrix[3] = 1;
+
+        // absMatrix[4] = 1;   absMatrix[5] = 0;   absMatrix[6] = 1;   absMatrix[7] = 1;
+
+        // absMatrix[8] = 0;   absMatrix[9] = 1;   absMatrix[10] = 0;  absMatrix[11] = 1;
+
+        // absMatrix[12] = 1;  absMatrix[13] = 1;  absMatrix[14] = 1;  absMatrix[15] = 0;
+        // printf("absolute matrix\n");
         // printMatrix(absMatrix, n, n, 0);
 
-        // matrix_multiply(&relMatrix, &absMatrix, n, n, &absMatrix, n, n);
-        // temp = relMatrix;
-        // matrix_multiply(&relMatrix, &temp, n, n, &absMatrix, n, n);
-        // temp = relMatrix;
-        // matrix_multiply(&relMatrix, &temp, n, n, &absMatrix, n, n);
-        // matrix_divide(&relMatrix, n, n, 8);
-
-        // squares = void_columns(relMatrix, absMatrix);
-
-        // printMatrix(relMatrix, n, n, 0);
-        // printf("Number of squares: %d\n", squares);
-        // // for(i = 0; i < p; i++) {
-        // //     displs[i] = displ;
-        // //     sendCounts[i] = round((float) (n / p) + i * (n / p)) - round((float) i * (n / p));
-        // //     displ += sendCounts[i];
-        // // }
+        printf("Clock begun!\n");
+        begin = clock();
     }
 
-    // begin = clock();
+    MPI_Bcast(absMatrix, n * n, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(absMatrix, n * n / p, MPI_INT, A, n * n / p, MPI_INT, 0, MPI_COMM_WORLD);
+    matrix_multiply(&resMatrix, &absMatrix, n, n, &A, n, n / p);
+    MPI_Gather(resMatrix, n * n / p, MPI_INT, revMatrix, n * n / p, MPI_INT, 0, MPI_COMM_WORLD);
 
-    MPI_Bcast(&absMatrix, n, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(revMatrix, n * n, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(revMatrix, n * n / p, MPI_INT, A, n * n / p, MPI_INT, 0, MPI_COMM_WORLD);
+    matrix_multiply(&resMatrix, &revMatrix, n, n, &A, n, n / p);
+    MPI_Gather(resMatrix, n * n / p, MPI_INT, revMatrix, n * n / p, MPI_INT, 0, MPI_COMM_WORLD);
+    
+    if(rank == 0) {
+        // printf("final matrix\n");
+        // printMatrix(revMatrix, n, n, 0);
 
-    // for(i = n / p; i < n * n / p; i++) {
-    //     relMatrix[i] = relMatrix[i] + relMatrix[i - n / p];
-    // }
+        matrix_divide(&revMatrix, n, n, 8);
+        squares = void_columns(revMatrix, absMatrix);
 
-    // MPI_Gatherv(relMatrix, n / p, MPI_INT, absMatrix, sendCounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
+        end = clock();
+        printf("Process done!\n");
+        time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    // end = clock();
-    // time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+        printf("Squares: %ld\n", squares);
 
-    // printf("n: %d with p: %d\nTime elapsed: %lf\n", n, p, time_spent);
+        printf("n: %d with p: %d\n", n, p);
+        printf("Time elapsed: %lf\n", time_spent);
+    }
 
     MPI_Finalize();
     return 0;
