@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#define n 8004
+#define n 4008
 
 void printMatrix(int *matrix, int row, int col, int last) {
     printf("==================================\n");
